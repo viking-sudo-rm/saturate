@@ -127,7 +127,7 @@ def get_metrics(args, model, dev_tokens, dev_mask, reg=None, device="cuda:0"):
     numel = dev_mask[:, :-1].sum()
     return {
         "acc1": (all_agreement.sum() / numel).item(),
-        "norm": get_norm(model).item(),
+        "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "loss": all_loss.mean().item(),
         "pplx": all_perps.mean().item(),
         "sat": (all_saturation.sum() / numel).item(),
