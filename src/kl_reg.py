@@ -11,15 +11,16 @@ class KlSatReg:
     """
 
     def __init__(self, loss: Optional["torch._Loss"] = None, tol: float = .9, detach: bool = True):
-        self.loss = loss or KLDivLoss(reduction="sum")
+        self.loss = loss or KLDivLoss(reduction="sum")  # The loss should return a sum, not a mean.
         self.tol = tol
         self.detach = detach
 
-    def __call__(self, probs: torch.Tensor) -> torch.Tensor:
+    def __call__(self, probs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
             max_prob, _ = probs.max(dim=-1)
             max_prob = max_prob.unsqueeze(dim=-1)
-            mask = (probs > max_prob * self.tol)
-            counts = mask.sum(dim=-1).unsqueeze(dim=-1)
-            sat_probs = mask.float() / counts
-        return self.loss(probs, sat_probs)
+            sat_mask = (probs > max_prob * self.tol)
+            counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
+            sat_probs = sat_mask.float() / counts
+        mask = mask.unsqueeze(dim=-1)
+        return self.loss(probs * mask, sat_probs * mask) / mask.sum()

@@ -27,7 +27,6 @@ from src.reg_schedules import reg_schedules
 
 DATA = os.getenv("DATA")
 assert os.path.isdir(str(DATA)), f"Could not find data folder: {DATA}"
-PATH = DATA
 MODELS = os.getenv("MODELS")
 assert os.path.isdir(str(MODELS)), f"Could not find models folder: {MODELS}"
 
@@ -151,6 +150,7 @@ def train_model(
     max_iterations = None,
 ):
     reg = KlSatReg()
+    reg_fn = lambda probs: reg(probs, train_mask)
     reg_sched = reg_schedules[args.reg_schedule]
     batch_timeseries = defaultdict(list)
     timeseries = defaultdict(list)
@@ -184,15 +184,15 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            with model.capture_attention(reg) as reg_terms:
+            with model.capture_attention(reg_fn) as reg_terms:
                 _, logits = model(batch_tokens[:, :-1])
             loss = sequence_cross_entropy_with_logits(
                 logits, batch_tokens[:, 1:], batch_mask[:, :-1]
             )
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
-                # Maybe we can normalize better than dividing by args.seq_len.
-                loss += reg_weight * torch.mean(torch.cat([x for _, x in reg_terms])) / (args.batch_size * args.seq_len)
+                # Mean of means is fine here as long as internal number stays constant.
+                loss += reg_weight * torch.mean(torch.cat([x for _, x in reg_terms]))
             loss.backward()
             optimizer.step()
             iteration += 1
@@ -215,8 +215,8 @@ def train_model(
 def main(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = Tokenizer()
-    raw_train, train_tokens, train_mask = get_text_tokens_mask(f"{PATH}/{args.data}/train.txt", args.seq_len, tokenizer, name="train", log=log)
-    _, dev_tokens, dev_mask = get_text_tokens_mask(f"{PATH}/{args.data}/valid.txt", args.seq_len, tokenizer, name="dev", log=log)
+    raw_train, train_tokens, train_mask = get_text_tokens_mask(f"{DATA}/{args.data}/train.txt", args.seq_len, tokenizer, name="train", log=log)
+    _, dev_tokens, dev_mask = get_text_tokens_mask(f"{DATA}/{args.data}/valid.txt", args.seq_len, tokenizer, name="dev", log=log)
     # Maximum number of training steps, used for linearly decaying learning rate schedule.
     max_iterations = len(raw_train) // args.batch_size * args.epochs
 
