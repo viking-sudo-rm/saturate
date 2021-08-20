@@ -58,5 +58,6 @@ class CaptureAttention(Module):
         _, attns = outputs
         self.cm.add(name, attns)
 
-    def capture_attention(self, reg) -> Iterator[None]:
-        return _CaptureAttentionContextManager(self, reg)
+    def capture_attention(self, consumer: Callable[[Tensor], Tensor] = None) -> Iterator[None]:
+        """Return list of all attention matrices captured within this context. Optionally, consume the matrices first."""
+        return _CaptureAttentionContextManager(self, consumer)
