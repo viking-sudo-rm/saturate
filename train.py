@@ -51,7 +51,7 @@ optims = {
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--dev_batch_size", type=int, default=50)
+    parser.add_argument("--dev_batch_size", type=int, default=500)
     # Wikitext-2: Largest sentence is 699 on train, 429 on test.
     # Penn: Largest sentence is 82 on train, 74 on test.
     parser.add_argument("--seq_len", type=int, default=700)
