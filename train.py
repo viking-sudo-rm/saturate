@@ -250,7 +250,7 @@ def main(args):
         train_mask,
         dev_tokens,
         dev_mask,
-        opt(model.parameters(), lr=args.lr, wd=args.wd),
+        opt(model.parameters(), lr=args.lr, weight_decay=args.wd),
         epochs=args.epochs,
         record_init=True,
         scheduler=args.sched,
