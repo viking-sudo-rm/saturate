@@ -194,9 +194,9 @@ def train_model(
         # Save the model checkpoint if this is the best performance yet.
         if metrics["loss"] < best_loss:
             best_loss = metrics["loss"]
-            data_dir = os.path.join(args.data_dir, args.data)
-            ckpt_path = os.path.join(data_dir, args.trans + ".pt")
-            torch.save(model.state_dict(), ckpt_path)
+            dirname = f"{args.trans}-{args.optim}-{args.sched}"
+            data_dir = os.path.join(args.data_dir, args.data, dirname)
+            torch.save(model.state_dict(), os.path.join(data_dir, "model.pt"))
 
     return timeseries, batch_timeseries
 
@@ -254,7 +254,6 @@ def main(args):
         pickle.dump(timeseries, fh)
     with open(os.path.join(data_dir, "batch_timeseries.dat"), "wb") as fh:
         pickle.dump(batch_timeseries, fh)
-    torch.save(model.state_dict(), os.path.join(data_dir, "model.pt"))
 
     # Generate figures for each metric over this training run.
     fig_dir = os.path.join(args.fig_dir, args.data, dirname)
