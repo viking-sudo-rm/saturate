@@ -36,3 +36,12 @@ def get_text_tokens_mask(path, seq_len, tokenizer, name="train", log=None):
         log.info(f"Max {name} sentence length is {train_len} (<= {seq_len}).")
     
     return raw_train, train_tokens, train_mask
+
+
+def iterate_lines(self, path):
+    """Read lines in a language modeling dataset."""
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if line and line[0] != "=":
+                yield line
