@@ -21,7 +21,6 @@ class KlSatReg:
         if self.detach:
             max_prob = max_prob.detach()
         mask = (probs > max_prob * self.tol)
-        counts = mask.sum(dim=-1)
-        import pdb; pdb.set_trace()
+        counts = mask.sum(dim=-1).unsqueeze(dim=-1)
         sat_probs = mask.float() / counts
         return self.loss(probs, sat_probs)
