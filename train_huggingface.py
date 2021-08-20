@@ -186,7 +186,7 @@ def main(args):
     model = GPT2LMHeadModel.from_pretrained(args.model, return_dict=True, output_attentions=True)
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/train.txt")), padding=True, truncation=True, return_tensors="pt")
-    dev = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/dev.txt")), padding=True, truncation=True, return_tensors="pt")
+    dev = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/valid.txt")), padding=True, truncation=True, return_tensors="pt")
     max_iterations = len(train) // args.batch_size * args.epochs
 
     if torch.cuda.device_count() > 1:
