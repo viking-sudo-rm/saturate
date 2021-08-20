@@ -96,7 +96,8 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
     for b in range(0, len(dev_tokens), args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        lm_loss, _, attns = model(dev_batch_tokens, attention_mask=dev_batch_mask)
+        lm_outputs = model(dev_batch_tokens, attention_mask=dev_batch_mask)
+        import pdb; pdb.set_trace()
         attn_loss = torch.mean(torch.cat([reg(attn, dev_batch_mask) for _, attn in attns]))
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
