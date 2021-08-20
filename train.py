@@ -177,7 +177,7 @@ def train_model(
             loss = sequence_cross_entropy_with_logits(
                 logits, batch_tokens[:, 1:], batch_mask[:, :-1]
             )
-            if args.reg_weight > 0:
+            if reg_sched is not reg_schedules[None]:
                 reg_weight = reg_sched(iteration, max_iterations)
                 loss += reg_weight * reg(torch.cat([a for _, a in attns], dim=0))
             loss.backward()
