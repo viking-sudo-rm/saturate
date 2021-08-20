@@ -92,7 +92,7 @@ def get_metrics(args, model, dev_tokens, dev_mask, reg=None, device="cuda:0"):
         dev_loss = sequence_cross_entropy_with_logits(
             dev_logits, dev_batch_tokens[:, 1:], dev_batch_mask[:, :-1], average=None
         )
-        attn_saturation = reg(torch.cat([a for _, a in attns], dim=0)).item() if reg else 0.
+        # attn_saturation = reg(torch.cat([a for _, a in attns], dim=0)).item() if reg else 0.
         dev_preds = dev_logits.argmax(dim=-1)
         agreement = (dev_preds == dev_batch_tokens[:, 1:]).float() * dev_batch_mask[
             :, :-1
@@ -104,12 +104,12 @@ def get_metrics(args, model, dev_tokens, dev_mask, reg=None, device="cuda:0"):
             * dev_batch_mask[:, :-1].unsqueeze(dim=-1),
         )
         all_loss.append(dev_loss.cpu())
-        all_attn_saturation.append(attn_saturation)
+        # all_attn_saturation.append(attn_saturation)
         all_agreement.append(agreement.cpu())
         all_saturation.append(saturation.cpu())
 
     all_loss = torch.cat(all_loss, dim=0)
-    all_attn_saturation = torch.cat(all_attn_saturation, dim=0)
+    # all_attn_saturation = torch.cat(all_attn_saturation, dim=0)
     all_agreement = torch.cat(all_agreement, dim=0)
     all_saturation = torch.cat(all_saturation, dim=0)
     all_perps = torch.pow(2, all_loss)
@@ -121,7 +121,7 @@ def get_metrics(args, model, dev_tokens, dev_mask, reg=None, device="cuda:0"):
         "pplx": all_perps.mean().item(),
         "sat": (all_saturation.sum() / numel).item(),
         # Technically a mean of means, but that's probably okay.
-        "attn_sat": all_attn_saturation.mean().item(),
+        # "attn_sat": all_attn_saturation.mean().item(),
     }
 
 
