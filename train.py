@@ -1,5 +1,6 @@
 """Script for training transformers with potential architectural modifications."""
 
+from typing import Tuple
 import tqdm
 import torch
 from collections import defaultdict
@@ -75,6 +76,17 @@ def parse_args():
     parser.add_argument("--add_eos", action="store_true", help="Add <eos> to train sentences.")
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     return parser.parse_args()
+
+
+def get_dirs(args) -> Tuple[str, str]:
+    dirname = f"{args.trans}-{args.optim}-{args.sched}"
+    data_dir = os.path.join(args.data_dir, args.data, dirname)
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
+    fig_dir = os.path.join(args.fig_dir, args.data, dirname)
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    return data_dir, fig_dir
 
 
 @torch.no_grad()
@@ -194,8 +206,7 @@ def train_model(
         # Save the model checkpoint if this is the best performance yet.
         if metrics["loss"] < best_loss:
             best_loss = metrics["loss"]
-            dirname = f"{args.trans}-{args.optim}-{args.sched}"
-            data_dir = os.path.join(args.data_dir, args.data, dirname)
+            data_dir, _ = get_dirs(args)
             torch.save(model.state_dict(), os.path.join(data_dir, "model.pt"))
 
     return timeseries, batch_timeseries
@@ -246,19 +257,13 @@ def main(args):
     )
     
     # Save all the raw data from this model run.
-    dirname = f"{args.trans}-{args.optim}-{args.sched}"
-    data_dir = os.path.join(args.data_dir, args.data, dirname)
-    if not os.path.isdir(data_dir):
-        os.makedirs(data_dir)
+    data_dir, fig_dir = get_dirs(args)
     with open(os.path.join(data_dir, "timeseries.dat"), "wb") as fh:
         pickle.dump(timeseries, fh)
     with open(os.path.join(data_dir, "batch_timeseries.dat"), "wb") as fh:
         pickle.dump(batch_timeseries, fh)
 
     # Generate figures for each metric over this training run.
-    fig_dir = os.path.join(args.fig_dir, args.data, dirname)
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
     for metric, values in timeseries.items():
         plt.figure()
         plt.plot(values)
