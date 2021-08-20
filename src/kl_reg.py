@@ -1,6 +1,6 @@
 from typing import Optional
 import torch
-from torch.nn import KLDivLoss, _Loss
+from torch.nn import KLDivLoss
 
 
 class KlSatReg:
@@ -10,8 +10,8 @@ class KlSatReg:
     heuristic saturation is designed to tolerate imprecision, i.e., treat values that are close as the same.
     """
 
-    def __init__(self, loss: Optional[_Loss], tol: float = .9, detach: bool = True):
-        self.loss = loss or torch.nn.KLDivLoss()
+    def __init__(self, loss: Optional["torch._Loss"], tol: float = .9, detach: bool = True):
+        self.loss = loss or KLDivLoss()
         self.tol = tol
         self.detach = detach
 
