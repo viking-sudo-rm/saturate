@@ -152,7 +152,7 @@ def train_model(
     best_loss = float("inf")
     lr_adjuster = get_policy(scheduler)(optimizer, args, max_iterations=max_iterations)
     iteration = 0
-    n_iterations = epochs * (len(train_tokens) // args.batch_size)
+    max_iterations = len(train_tokens) // args.batch_size * epochs
     for e in range(epochs):
         model.train()
         log.info(f"Starting epoch {e}...")
@@ -178,7 +178,7 @@ def train_model(
                 logits, batch_tokens[:, 1:], batch_mask[:, :-1]
             )
             if args.reg_weight > 0:
-                reg_weight = reg_sched(iteration, n_iterations)
+                reg_weight = reg_sched(iteration, max_iterations)
                 loss += reg_weight * reg(torch.cat([a for _, a in attns], dim=0))
             loss.backward()
             optimizer.step()
@@ -208,6 +208,7 @@ def main(args):
     # Maximum number of training steps, used for linearly decaying learning rate schedule.
     max_iterations = len(raw_train) // args.batch_size * args.epochs
 
+    log.info("Constructing model...")
     model = LanguageModel(
         d_model=args.d_model,
         d_ff=args.d_ff,
@@ -219,6 +220,7 @@ def main(args):
         bias=not args.no_bias,
     )
     model = CaptureAttention(model)
+    log.info("Model constructed :)")
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
