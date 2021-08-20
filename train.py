@@ -51,7 +51,7 @@ optims = {
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--dev_batch_size", type=int, default=500)
+    parser.add_argument("--dev_batch_size", type=int, default=50)
     # Wikitext-2: Largest sentence is 699 on train, 429 on test.
     # Penn: Largest sentence is 82 on train, 74 on test.
     parser.add_argument("--seq_len", type=int, default=700)
@@ -87,8 +87,7 @@ def get_metrics(args, model, dev_tokens, dev_mask, reg=None, device="cuda:0"):
     for b in range(0, len(dev_tokens), args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        with model.capture_attention() as attns:
-            dev_encoding, dev_logits = model(dev_batch_tokens[:, :-1])
+        dev_encoding, dev_logits = model(dev_batch_tokens[:, :-1])
         dev_loss = sequence_cross_entropy_with_logits(
             dev_logits, dev_batch_tokens[:, 1:], dev_batch_mask[:, :-1], average=None
         )
