@@ -22,6 +22,6 @@ class KlSatReg:
             sat_mask = (probs > max_prob * self.tol)
             counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
             sat_probs = sat_mask.float() / counts
-        mask = mask.unsqueeze(dim=-1)
-        import pdb; pdb.set_trace()
+        # Add dimension for heads and for probabilities.
+        mask = mask.unsqueeze(dim=1).unsqueeze(dim=-1)
         return self.loss(probs * mask, sat_probs * mask) / mask.sum()
