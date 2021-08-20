@@ -73,7 +73,7 @@ def parse_args():
     parser.add_argument("--stop_iteration", type=int, default=1000)  # End of constant LR warmup
     parser.add_argument("--batch_metrics", type=int, default=None)
     parser.add_argument("--add_eos", action="store_true", help="Add <eos> to train sentences.")
-    parser.add_argument("--reg_schedule", choices=reg_schedules.keys())
+    parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default="constant")
     return parser.parse_args()
 
 
