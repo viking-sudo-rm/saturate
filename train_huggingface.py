@@ -15,7 +15,6 @@ import pickle
 import os
 
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
-from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 
 from src.schedulers import get_policy
 from src.metrics import get_norm
@@ -36,7 +35,6 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[RichHandler()],
 )
-
 log = logging.getLogger("rich")
 
 
@@ -52,25 +50,15 @@ def parse_args():
     parser.add_argument("--model", type=str, default="gpt2", help="Name of huggingface model.")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--dev_batch_size", type=int, default=50)
-    # Wikitext-2: Largest sentence is 699 on train, 429 on test.
-    # Penn: Largest sentence is 82 on train, 74 on test.
-    parser.add_argument("--seq_len", type=int, default=700)
-    parser.add_argument("--d_model", type=int, default=768)
-    parser.add_argument("--d_ff", type=int, default=512)
-    parser.add_argument("--n_heads", type=int, default=12)
-    parser.add_argument("--n_layers", type=int, default=12)
-    parser.add_argument("--optim", choices=optims.keys(), default="sgd")
-    parser.add_argument("--lr", type=float, default=1e-2)
+    parser.add_argument("--optim", choices=optims.keys(), default="adamw")
+    parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--wd", type=float, default=1e-1)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--fig_dir", type=str, default="figs/finetune-trans")
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
-    parser.add_argument("--no_bias", action="store_true")
     parser.add_argument("--data", choices=["wikitext-2", "penn"], default="wikitext-2")
-    parser.add_argument("--sched", choices=["constant_lr", "linear_lr", "sqrt_lr"], default="constant_lr")
-    parser.add_argument("--stop_iteration", type=int, default=1000)  # End of constant LR warmup
     parser.add_argument("--batch_metrics", type=int, default=None)
-    parser.add_argument("--add_eos", action="store_true", help="Add <eos> to train sentences.")
+    parser.add_argument("--sched", choices=["constant_lr", "linear_lr", "sqrt_lr"], default="constant_lr")
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     return parser.parse_args()
 
