@@ -1,6 +1,6 @@
 """Implementation for some saturation regularization schedules."""
 
-def control(step: int, n_steps: int) -> float:
+def none(step: int, n_steps: int) -> float:
     return 0.
 
 def phased(step: int, n_steps: int) -> float:
@@ -15,7 +15,8 @@ def ramp(step: int, n_steps: int) -> float:
     return 2 * step / n_steps - 1
 
 reg_schedules = {
-    "control": control,
+    None: none,
+    "none": none,
     "phased": phased,
     "linear": linear,
     "ramp": ramp,
