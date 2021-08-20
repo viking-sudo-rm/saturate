@@ -77,7 +77,7 @@ def parse_args():
 
 def get_dirs(args) -> Tuple[str, str]:
     """Get the proper directories for storing data and figures."""
-    dirname = f"{args.trans}-{args.optim}-{args.sched}"
+    dirname = args.model
     data_dir = os.path.join(args.data_dir, args.data, dirname)
     if not os.path.isdir(data_dir):
         os.makedirs(data_dir)
