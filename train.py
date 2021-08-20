@@ -144,6 +144,7 @@ def train_model(
     batch_timeseries = defaultdict(list)
     timeseries = defaultdict(list)
     if record_init:
+        log.info("Computing initial metrics...")
         metrics = get_metrics(args, model, dev_tokens, dev_mask, reg=reg, device=device)
         for name, value in metrics.items():
             timeseries[name].append(value)
@@ -228,7 +229,7 @@ def main(args):
     opt = optims[args.optim]
 
     # Train the model and collect metrics.
-    log.info("Starting training :)")
+    log.info("Starting training...")
     timeseries, batch_timeseries = train_model(
         args,
         model,
@@ -242,6 +243,7 @@ def main(args):
         scheduler=args.sched,
         max_iterations=max_iterations,
         device=device,
+        log=log,
     )
     
     # Save all the raw data from this model run.
