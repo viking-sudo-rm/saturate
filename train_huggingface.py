@@ -96,7 +96,7 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
     for b in range(0, len(dev_tokens), args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        lm_outputs = model(dev_batch_tokens, attention_mask=dev_batch_mask, output_attentions=True)
+        lm_outputs = model(dev_batch_tokens, attention_mask=dev_batch_mask, return_dict=True, output_attentions=True)
         import pdb; pdb.set_trace()
         lm_loss, _, _, _, _, attns = lm_outputs
         attn_loss = torch.mean(torch.cat([reg(attn, dev_batch_mask) for attn in attns]))
@@ -155,7 +155,7 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            lm_outputs = model(batch_tokens, attention_mask=batch_mask, output_attentions=True)
+            lm_outputs = model(batch_tokens, attention_mask=batch_mask, return_dict=True, output_attentions=True)
             loss, _, _, _, _, attns = lm_outputs
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
@@ -184,7 +184,7 @@ def main(args):
     assert args.model == "gpt2"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
-    model = GPT2LMHeadModel.from_pretrained(args.model, return_dict=True)
+    model = GPT2LMHeadModel.from_pretrained(args.model)
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/train.txt")), padding=True, truncation=True, return_tensors="pt")
     dev = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/valid.txt")), padding=True, truncation=True, return_tensors="pt")
