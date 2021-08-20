@@ -16,7 +16,8 @@ class KlSatReg:
         self.detach = detach
 
     def __call__(self, probs):
-        max_prob = probs.max(dim=-1).unsqueeze(dim=-1)
+        max_prob, _ = probs.max(dim=-1)
+        max_prob = max_prob.unsqueeze(dim=-1)
         if self.detach:
             max_prob = max_prob.detach()
         mask = (probs > max_prob * self.tol)
