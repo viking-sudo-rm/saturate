@@ -102,7 +102,7 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
     return {
-        "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
+        # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "lm_loss": torch.cat(lm_losses).mean().item(),
         "attn_loss": torch.cat(attn_losses).mean().item(),
     }
