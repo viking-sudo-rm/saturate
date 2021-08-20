@@ -89,8 +89,7 @@ def get_dirs(args) -> Tuple[str, str]:
 
 @torch.no_grad()
 def get_metrics(args, model, dev, reg=None, device="cuda:0"):
-    import pdb; pdb.set_trace()
-    dev_tokens = dev["token_ids"]
+    dev_tokens = dev["input_ids"]
     dev_mask = dev["attention_mask"]
     lm_losses, attn_losses = [], []
     # In this loop, we iterate over the full dev set, including the small bit at the end.
