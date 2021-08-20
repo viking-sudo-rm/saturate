@@ -243,7 +243,6 @@ def main(args):
         scheduler=args.sched,
         max_iterations=max_iterations,
         device=device,
-        log=log,
     )
     
     # Save all the raw data from this model run.
