@@ -15,7 +15,7 @@ class KlSatReg:
         self.tol = tol
         self.detach = detach
 
-    def __call__(self, probs):
+    def __call__(self, probs: torch.Tensor) -> torch.Tensor:
         max_prob, _ = probs.max(dim=-1)
         max_prob = max_prob.unsqueeze(dim=-1)
         if self.detach:
