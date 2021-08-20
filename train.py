@@ -59,7 +59,9 @@ def parse_args():
     parser.add_argument("--d_ff", type=int, default=512)
     parser.add_argument("--n_heads", type=int, default=12)
     parser.add_argument("--n_layers", type=int, default=12)
+    parser.add_argument("--optim", choices=optims.keys(), default="sgd")
     parser.add_argument("--lr", type=float, default=1e-2)
+    parser.add_argument("--wd", type=float, default=1e-1)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument(
         "--trans", type=str, default="vaswani", choices=["vaswani"] + list(transformers.keys())
@@ -68,7 +70,6 @@ def parse_args():
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
     parser.add_argument("--no_bias", action="store_true")
     parser.add_argument("--data", choices=["wikitext-2", "penn"], default="wikitext-2")
-    parser.add_argument("--optim", choices=optims.keys(), default="adamw")
     parser.add_argument("--sched", choices=["constant_lr", "linear_lr", "sqrt_lr"], default="constant_lr")
     parser.add_argument("--stop_iteration", type=int, default=1000)  # End of constant LR warmup
     parser.add_argument("--batch_metrics", type=int, default=None)
@@ -249,7 +250,7 @@ def main(args):
         train_mask,
         dev_tokens,
         dev_mask,
-        opt(model.parameters(), lr=args.lr),
+        opt(model.parameters(), lr=args.lr, wd=args.wd),
         epochs=args.epochs,
         record_init=True,
         scheduler=args.sched,
