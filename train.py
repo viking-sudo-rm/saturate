@@ -60,7 +60,7 @@ def parse_args():
     parser.add_argument("--n_heads", type=int, default=12)
     parser.add_argument("--n_layers", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-2)
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument(
         "--trans", type=str, default="vaswani", choices=["vaswani"] + list(transformers.keys())
     )
@@ -78,6 +78,7 @@ def parse_args():
 
 
 def get_dirs(args) -> Tuple[str, str]:
+    """Get the proper directories for storing data and figures."""
     dirname = f"{args.trans}-{args.optim}-{args.sched}"
     data_dir = os.path.join(args.data_dir, args.data, dirname)
     if not os.path.isdir(data_dir):
@@ -152,14 +153,14 @@ def train_model(
     reg = KlSatReg()
     reg_fn = lambda probs: reg(probs, train_mask)
     reg_sched = reg_schedules[args.reg_schedule]
-    batch_timeseries = defaultdict(list)
     timeseries = defaultdict(list)
+    batch_timeseries = defaultdict(list)
     if record_init:
         log.info("Computing initial metrics...")
         metrics = get_metrics(args, model, dev_tokens, dev_mask, reg=reg, device=device)
         for name, value in metrics.items():
             timeseries[name].append(value)
-        print(metrics)
+        log.info(metrics)
 
     best_loss = float("inf")
     lr_adjuster = get_policy(scheduler)(optimizer, args, max_iterations=max_iterations)
