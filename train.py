@@ -226,6 +226,7 @@ def main(args):
     opt = optims[args.optim]
 
     # Train the model and collect metrics.
+    log.info("Starting training :)")
     timeseries, batch_timeseries = train_model(
         args,
         model,
