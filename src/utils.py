@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterator
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
@@ -38,7 +38,7 @@ def get_text_tokens_mask(path, seq_len, tokenizer, name="train", log=None):
     return raw_train, train_tokens, train_mask
 
 
-def iterate_lines(self, path):
+def iterate_lines(path: str) -> Iterator[str]:
     """Read lines in a language modeling dataset."""
     with open(path) as fh:
         for line in fh:

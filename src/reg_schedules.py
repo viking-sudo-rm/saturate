@@ -14,10 +14,14 @@ def ramp(step: int, n_steps: int) -> float:
         return 0.
     return 2 * step / n_steps - 1
 
+def constant(step: int, n_steps: int) -> float:
+    return 1.
+
 reg_schedules = {
     None: none,
     "none": none,
     "phased": phased,
     "linear": linear,
     "ramp": ramp,
+    "constant": constant,
 }
