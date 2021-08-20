@@ -178,7 +178,7 @@ def train_model(
                 logits, batch_tokens[:, 1:], batch_mask[:, :-1]
             )
             reg_weight = reg_sched(iteration, max_iterations)
-            loss += reg_weight * torch.sum(torch.cat(reg_terms))
+            loss += reg_weight * torch.sum(torch.cat([x for _, x in reg_terms]))
             loss.backward()
             optimizer.step()
             iteration += 1
