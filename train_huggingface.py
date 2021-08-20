@@ -81,7 +81,8 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
     dev_mask = dev["attention_mask"]
     lm_losses, attn_losses = [], []
     # In this loop, we iterate over the full dev set, including the small bit at the end.
-    for b in range(0, len(dev_tokens), args.dev_batch_size):
+    # FIXME: Missing end of loop.
+    for b in range(0, len(dev_tokens) - args.dev_batch_size, args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
         lm_outputs = model(dev_batch_tokens, attention_mask=dev_batch_mask)
