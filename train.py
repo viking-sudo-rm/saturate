@@ -13,8 +13,6 @@ from rich import print
 import pickle
 import os
 
-from transformers.optimization import Adafactor
-
 from src.capture_attention import CaptureAttention
 from src.schedulers import get_policy
 from src.loss import sequence_cross_entropy_with_logits
@@ -47,7 +45,6 @@ optims = {
     "sgd": optim.SGD,
     "adam": optim.Adam,
     "adamw": optim.AdamW,
-    "adafactor": Adafactor,
 }
 
 
