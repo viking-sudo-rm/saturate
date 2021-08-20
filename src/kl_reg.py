@@ -23,4 +23,5 @@ class KlSatReg:
             counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
             sat_probs = sat_mask.float() / counts
         mask = mask.unsqueeze(dim=-1)
+        import pdb; pdb.set_trace()
         return self.loss(probs * mask, sat_probs * mask) / mask.sum()
