@@ -172,14 +172,13 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            with model.capture_attention() as attns:
+            with model.capture_attention(reg) as reg_terms:
                 _, logits = model(batch_tokens[:, :-1])
             loss = sequence_cross_entropy_with_logits(
                 logits, batch_tokens[:, 1:], batch_mask[:, :-1]
             )
-            if reg_sched is not reg_schedules[None]:
-                reg_weight = reg_sched(iteration, max_iterations)
-                loss += reg_weight * reg(torch.cat([a for _, a in attns], dim=0))
+            reg_weight = reg_sched(iteration, max_iterations)
+            loss += reg_weight * torch.sum(torch.cat(reg_terms))
             loss.backward()
             optimizer.step()
             iteration += 1

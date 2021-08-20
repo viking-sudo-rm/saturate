@@ -11,7 +11,7 @@ class KlSatReg:
     """
 
     def __init__(self, loss: Optional["torch._Loss"] = None, tol: float = .9, detach: bool = True):
-        self.loss = loss or KLDivLoss()
+        self.loss = loss or KLDivLoss(reduction="sum")
         self.tol = tol
         self.detach = detach
 

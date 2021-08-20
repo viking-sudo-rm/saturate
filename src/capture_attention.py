@@ -1,4 +1,4 @@
-from typing import List, Tuple, Iterator
+from typing import Callable, List, Tuple, Iterator
 from torch import Tensor
 from torch.nn import Module
 
@@ -7,17 +7,28 @@ from .si_transformer import SiEncoder, SiSelfAttention
 
 
 class _CaptureAttentionContextManager:
-    def __init__(self, capture):
+    def __init__(self,
+                 capture: "CaptureAttention",
+                 consume: Callable[[Tensor], Tensor],
+                ):
+        capture.cm = self
         self.capture = capture
+        self.consume = consume
+        self.attns = []
 
     def __enter__(self) -> List[Tuple[str, Tensor]]:
         """Return a pointer to the list where attention will be stored."""
-        self.capture.attns = []
-        return self.capture.attns
+        return self.attns
     
     def __exit__(self, type, value, traceback):
-        self.capture.attns = None
-
+        self.capture.cm = None
+    
+    def add(self, name: str, probs: Tensor) -> None:
+        if self.consume is None:
+            attn = self.consume(probs)
+        else:
+            attn = probs
+        self.attns.append((name, attn))
 
 class CaptureAttention(Module):
     """Capture attention patterns in my custom transformer."""
@@ -28,8 +39,8 @@ class CaptureAttention(Module):
         assert isinstance(model.encoder, SiEncoder), f"Invalid encoder type: {type(model.encoder)}"
         self.model = model
         self.return_attns = return_attns
-        self.attns: List[Tuple[str, Tensor]] = None
         self.hash_to_name = {}
+        self.cm = None
 
         for name, module in model.named_modules():
             if isinstance(module, SiSelfAttention):
@@ -41,12 +52,11 @@ class CaptureAttention(Module):
 
     def _callback(self, module: Module, _: Tensor, outputs: Tensor):
         """Save the output attention distribution, if we are in a `capture_attention` context."""
-        if self.attns is None:
+        if self.cm is None:
             return
         name = self.hash_to_name[hash(module)]
-        _, attn_output_weights = outputs
-        attns = attn_output_weights.detach().cpu()
-        self.attns.append((name, attns))
+        _, attns = outputs
+        self.cm.add(name, attns)
 
-    def capture_attention(self) -> Iterator[None]:
-        return _CaptureAttentionContextManager(self)
+    def capture_attention(self, reg) -> Iterator[None]:
+        return _CaptureAttentionContextManager(self, reg)
