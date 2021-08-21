@@ -10,10 +10,9 @@ class KlSatReg:
     heuristic saturation is designed to tolerate imprecision, i.e., treat values that are close as the same.
     """
 
-    def __init__(self, loss: Optional["torch._Loss"] = None, tol: float = .9, detach: bool = True):
+    def __init__(self, loss: Optional["torch._Loss"] = None, tol: float = .9):
         self.loss = loss or KLDivLoss(reduction="sum")  # The loss should return a sum, not a mean.
         self.tol = tol
-        self.detach = detach
 
     def __call__(self, probs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():

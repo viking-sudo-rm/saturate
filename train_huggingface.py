@@ -127,7 +127,7 @@ def train_model(
     for e in range(epochs):
         model.train()
         log.info(f"Starting epoch {e}...")
-        perm = torch.randperm(len(train_tokens))
+        perm = torch.randperm(len(train))
         train_tokens = train["input_ids"][perm, :]
         train_mask = train["attention_mask"][perm, :]
 
