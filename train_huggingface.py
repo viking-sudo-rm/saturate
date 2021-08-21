@@ -159,9 +159,9 @@ def train_model(
             timeseries[name].append(value)
         print(metrics)
 
-        # Save the model checkpoint if this is the best performance yet.
-        if metrics["loss"] < best_loss:
-            best_loss = metrics["loss"]
+        # TODO: How do we do model selection here?
+        if metrics["lm_loss"] < best_loss:
+            best_loss = metrics["lm_loss"]
             data_dir, _ = get_dirs(args)
             torch.save(model.state_dict(), os.path.join(data_dir, "model.pt"))
 
