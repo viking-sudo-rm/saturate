@@ -14,9 +14,8 @@ from rich import print
 import pickle
 import os
 
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW, get_linear_schedule_with_warmup
 
-from src.schedulers import get_policy
 from src.metrics import get_norm
 from src.kl_reg import KlSatReg
 from src.reg_schedules import reg_schedules
@@ -38,13 +37,6 @@ logging.basicConfig(
 log = logging.getLogger("rich")
 
 
-optims = {
-    "sgd": optim.SGD,
-    "adam": optim.Adam,
-    "adamw": optim.AdamW,
-}
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -52,9 +44,6 @@ def parse_args():
     )
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--dev_batch_size", type=int, default=50)
-    parser.add_argument("--optim", choices=optims.keys(), default="adamw")
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--wd", type=float, default=1e-1)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--fig_dir", type=str, default="figs/finetune-trans")
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
@@ -66,6 +55,7 @@ def parse_args():
         default="constant_lr",
     )
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
+    parser.add_argument("--reg", type=float, default=1e-3)
     return parser.parse_args()
 
 
@@ -98,7 +88,7 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
         )
         lm_loss, _, _, attns = lm_outputs.values()
         attn_loss = torch.mean(
-            torch.stack([reg(attn, dev_batch_mask[:, :-1]) for attn in attns])
+            torch.stack([args.reg * reg(attn, dev_batch_mask[:, :-1]) for attn in attns])
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
@@ -115,10 +105,10 @@ def train_model(
     train,
     dev,
     optimizer,
+    scheduler,
     epochs=10,
     record_init=False,
     device="cuda:0",
-    scheduler: str = None,
     max_iterations=None,
 ):
     reg = KlSatReg()
@@ -133,7 +123,6 @@ def train_model(
         log.info(metrics)
 
     best_loss = float("inf")
-    lr_adjuster = get_policy(scheduler)(optimizer, args, max_iterations=max_iterations)
     iteration = 0
     max_iterations = len(train) // args.batch_size * epochs
     for e in range(epochs):
@@ -144,14 +133,11 @@ def train_model(
         train_mask = train["attention_mask"][perm, :]
 
         for b in tqdm.trange(0, len(train_tokens) - args.batch_size, args.batch_size):
-            cur_lr = lr_adjuster(e, iteration)
             if args.batch_metrics is not None and iteration % args.batch_metrics == 0:
                 norm = get_norm(model).item()
                 batch_timeseries["step"].append(iteration)
                 batch_timeseries["norm"].append(norm)
-                batch_timeseries["lr"].append(cur_lr)
 
-            tqdm.tqdm.write(f"i={iteration}, lr={cur_lr}", end="\r")
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
@@ -165,10 +151,11 @@ def train_model(
             if reg_weight != 0:
                 # Mean of means is fine here as long as internal number stays constant.
                 loss += reg_weight * torch.mean(
-                    torch.stack([reg(attn, batch_mask[:, :-1]) for attn in attns])
+                    torch.stack([args.reg * reg(attn, batch_mask[:, :-1]) for attn in attns])
                 )
             loss.backward()
             optimizer.step()
+            scheduler.step()
             iteration += 1
 
         model.eval()
@@ -209,7 +196,8 @@ def main(args):
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
     model = model.to(device)
-    opt = optims[args.optim]
+    optimizer = AdamW(model.parameters(), lr=2e-5)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=-1)
 
     # Train the model and collect metrics.
     log.info("Starting training...")
@@ -218,7 +206,8 @@ def main(args):
         model,
         train,
         dev,
-        opt(model.parameters(), lr=args.lr, weight_decay=args.wd),
+        optimizer,
+        scheduler,
         epochs=args.epochs,
         record_init=True,
         scheduler=args.sched,
