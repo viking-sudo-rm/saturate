@@ -188,6 +188,7 @@ def main(args):
         truncation=True,
         return_tensors="pt",
     )
+    import pdb; pdb.set_trace()
     max_iterations = len(train) // args.batch_size * args.epochs
 
     if torch.cuda.device_count() > 1:
