@@ -78,14 +78,11 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
     for b in range(0, len(dev_tokens) - args.dev_batch_size, args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        lm_outputs = model(
-            dev_batch_tokens[:, :-1],
-            labels=dev_batch_tokens[:, 1:],
-            attention_mask=dev_batch_mask[:, :-1],
-        )
+        # Labels are shifted inside GPT2.
+        lm_outputs = model(dev_batch_tokens, labels=dev_batch_tokens, attention_mask=dev_batch_mask)
         lm_loss, _, _, attns = lm_outputs.values()
         attn_loss = torch.mean(
-            torch.stack([args.reg * reg(attn, dev_batch_mask[:, :-1]) for attn in attns])
+            torch.stack([args.reg * reg(attn, dev_batch_mask) for attn in attns])
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
@@ -139,19 +136,15 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            lm_outputs = model(
-                batch_tokens[:, :-1],
-                labels=batch_tokens[:, 1:],
-                attention_mask=batch_mask[:, :-1],
-            )
+            lm_outputs = model(batch_tokens, labels=batch_tokens, attention_mask=batch_mask)
             loss, _, _, attns = lm_outputs.values()
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
                 # Mean of means is fine here as long as internal number stays constant.
                 loss += reg_weight * torch.mean(
-                    torch.stack([args.reg * reg(attn, batch_mask[:, :-1]) for attn in attns])
+                    torch.stack([args.reg * reg(attn, batch_mask) for attn in attns])
                 )
-            import pdb; pdb.set_trace()
+            breakpoint()
             loss.backward()
             optimizer.step()
             scheduler.step()
