@@ -188,8 +188,6 @@ def main(args):
         truncation=True,
         return_tensors="pt",
     )
-    n_train = len(train["input_ids"])
-    max_iterations = n_train // args.batch_size * args.epochs
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
@@ -208,7 +206,6 @@ def main(args):
         scheduler,
         epochs=args.epochs,
         record_init=True,
-        max_iterations=max_iterations,
         device=device,
     )
 
