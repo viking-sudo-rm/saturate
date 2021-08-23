@@ -19,4 +19,4 @@ def profile_cuda_tensors(log: Logger) -> None:
 def profile_memory(log: Logger, devices: List[int] = [0]) -> None:
     for dev in devices:
         mem = torch.cuda.memory_allocated(dev)
-        log.info(f"{dev} mem: {mem}")
+        log.info(f"{dev} mem: {mem // 1024**3}G")
