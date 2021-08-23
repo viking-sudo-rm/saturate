@@ -141,7 +141,7 @@ def train_model(
             optimizer.zero_grad()
             lm_outputs = model(
                 batch_tokens[:, :-1],
-                batch_tokens[:, 1:],
+                labels=batch_tokens[:, 1:],
                 attention_mask=batch_mask[:, :-1],
             )
             loss, _, _, attns = lm_outputs
