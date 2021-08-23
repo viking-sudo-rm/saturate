@@ -30,7 +30,7 @@ assert os.path.isdir(str(MODELS)), f"Could not find models folder: {MODELS}"
 
 
 logging.basicConfig(
-    level="NOTSET",
+    level="INFO",
     format="%(message)s",
     datefmt="[%X]",
     handlers=[RichHandler()],
