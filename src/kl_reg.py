@@ -14,14 +14,16 @@ class KlSatReg:
         self.loss = loss or KLDivLoss(reduction="sum")  # The loss should return a sum, not a mean.
         self.tol = tol
 
-    def __call__(self, probs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    def __call__(self, probs: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
+        # assert not mask
+        # mask = mask.unsqueeze(dim=1)
+        # mask = mask.unsqueeze(dim=2) * mask.unsqueeze(dim=3)
         with torch.no_grad():
-            max_prob, _ = probs.max(dim=-1)
+            max_prob, _ = (probs * mask).max(dim=-1)
             max_prob = max_prob.unsqueeze(dim=-1)
             sat_mask = (probs > max_prob * self.tol)
             counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
             sat_probs = sat_mask.float() / counts
         # Add dimension for heads and for probabilities.
         breakpoint()
-        mask = mask.unsqueeze(dim=1).unsqueeze(dim=-1)
-        return self.loss(probs * mask, sat_probs * mask) / mask.sum()
+        return self.loss(probs, sat_probs) / mask.sum()
