@@ -150,6 +150,10 @@ def train_model(
             scheduler.step()
             iteration += 1
 
+            del batch_tokens
+            del batch_mask
+            torch.cuda.empty_cache()
+
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
         for name, value in metrics.items():
