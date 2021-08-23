@@ -22,5 +22,6 @@ class KlSatReg:
             counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
             sat_probs = sat_mask.float() / counts
         # Add dimension for heads and for probabilities.
+        breakpoint()
         mask = mask.unsqueeze(dim=1).unsqueeze(dim=-1)
         return self.loss(probs * mask, sat_probs * mask) / mask.sum()

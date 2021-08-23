@@ -100,9 +100,6 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
         attn_loss = torch.mean(
             torch.stack([reg(attn, dev_batch_mask[:, :-1]) for attn in attns])
         )
-        import pdb
-
-        pdb.set_trace()
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
     return {
