@@ -85,8 +85,8 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
     for b in range(0, len(dev_tokens) - args.dev_batch_size, args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        lm_outputs = model(dev_batch_tokens, attention_mask=dev_batch_mask)
-        lm_loss, _, attns = lm_outputs.values()
+        lm_outputs = model(dev_batch_tokens[:, :-1], labels=dev_batch_tokens[:, 1:], attention_mask=dev_batch_mask)
+        lm_loss, _, _, attns = lm_outputs.values()
         attn_loss = torch.mean(torch.stack([reg(attn, dev_batch_mask) for attn in attns]))
         import pdb; pdb.set_trace()
         lm_losses.append(lm_loss.cpu())
@@ -144,7 +144,7 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            lm_outputs = model(batch_tokens, attention_mask=batch_mask)
+            lm_outputs = model(batch_tokens[:, :-1], batch_tokens[:, 1:], attention_mask=batch_mask)
             loss, _, attns = lm_outputs
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
