@@ -52,6 +52,7 @@ def parse_args():
     parser.add_argument("--batch_metrics", type=int, default=None)
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     parser.add_argument("--reg", type=float, default=1e-3)
+    parser.add_argument("--no_pretrain", action="store_true")
     return parser.parse_args()
 
 
@@ -174,8 +175,10 @@ def main(args):
     assert args.model == "gpt2"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
-    # model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
-    model = GPT2LMHeadModel(GPT2Config(output_attentions=True))
+    if not args.no_pretrain:
+        model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
+    else:
+        model = GPT2LMHeadModel(GPT2Config(output_attentions=True))
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(
         list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
