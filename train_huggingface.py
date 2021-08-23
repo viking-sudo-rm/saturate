@@ -47,7 +47,9 @@ optims = {
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="gpt2", help="Name of huggingface model.")
+    parser.add_argument(
+        "--model", type=str, default="gpt2", help="Name of huggingface model."
+    )
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--dev_batch_size", type=int, default=50)
     parser.add_argument("--optim", choices=optims.keys(), default="adamw")
@@ -58,7 +60,11 @@ def parse_args():
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
     parser.add_argument("--data", choices=["wikitext-2", "penn"], default="wikitext-2")
     parser.add_argument("--batch_metrics", type=int, default=None)
-    parser.add_argument("--sched", choices=["constant_lr", "linear_lr", "sqrt_lr"], default="constant_lr")
+    parser.add_argument(
+        "--sched",
+        choices=["constant_lr", "linear_lr", "sqrt_lr"],
+        default="constant_lr",
+    )
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     return parser.parse_args()
 
@@ -85,10 +91,18 @@ def get_metrics(args, model, dev, reg=None, device="cuda:0"):
     for b in range(0, len(dev_tokens) - args.dev_batch_size, args.dev_batch_size):
         dev_batch_tokens = dev_tokens[b : b + args.dev_batch_size].to(device)
         dev_batch_mask = dev_mask[b : b + args.dev_batch_size].to(device)
-        lm_outputs = model(dev_batch_tokens[:, :-1], labels=dev_batch_tokens[:, 1:], attention_mask=dev_batch_mask)
+        lm_outputs = model(
+            dev_batch_tokens[:, :-1],
+            labels=dev_batch_tokens[:, 1:],
+            attention_mask=dev_batch_mask[:, :-1],
+        )
         lm_loss, _, _, attns = lm_outputs.values()
-        attn_loss = torch.mean(torch.stack([reg(attn, dev_batch_mask) for attn in attns]))
-        import pdb; pdb.set_trace()
+        attn_loss = torch.mean(
+            torch.stack([reg(attn, dev_batch_mask[:, :-1]) for attn in attns])
+        )
+        import pdb
+
+        pdb.set_trace()
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
     return {
@@ -108,7 +122,7 @@ def train_model(
     record_init=False,
     device="cuda:0",
     scheduler: str = None,
-    max_iterations = None,
+    max_iterations=None,
 ):
     reg = KlSatReg()
     reg_sched = reg_schedules[args.reg_schedule]
@@ -144,12 +158,18 @@ def train_model(
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
-            lm_outputs = model(batch_tokens[:, :-1], batch_tokens[:, 1:], attention_mask=batch_mask)
+            lm_outputs = model(
+                batch_tokens[:, :-1],
+                batch_tokens[:, 1:],
+                attention_mask=batch_mask[:, :-1],
+            )
             loss, _, attns = lm_outputs
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
                 # Mean of means is fine here as long as internal number stays constant.
-                loss += reg_weight * torch.mean(torch.stack([reg(attn, batch_mask) for attn in attns]))
+                loss += reg_weight * torch.mean(
+                    torch.stack([reg(attn, batch_mask[:, :-1]) for attn in attns])
+                )
             loss.backward()
             optimizer.step()
             iteration += 1
@@ -175,8 +195,18 @@ def main(args):
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
     model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
     tokenizer.pad_token = tokenizer.eos_token
-    train = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/train.txt")), padding=True, truncation=True, return_tensors="pt")
-    dev = tokenizer(list(iterate_lines(f"{DATA}/{args.data}/valid.txt")), padding=True, truncation=True, return_tensors="pt")
+    train = tokenizer(
+        list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
+    )
+    dev = tokenizer(
+        list(iterate_lines(f"{DATA}/{args.data}/valid.txt")),
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
+    )
     max_iterations = len(train) // args.batch_size * args.epochs
 
     if torch.cuda.device_count() > 1:
@@ -198,7 +228,7 @@ def main(args):
         max_iterations=max_iterations,
         device=device,
     )
-    
+
     # Save all the raw data from this model run.
     data_dir, fig_dir = get_dirs(args)
     with open(os.path.join(data_dir, "timeseries.dat"), "wb") as fh:
