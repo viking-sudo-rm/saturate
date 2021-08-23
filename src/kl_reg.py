@@ -18,7 +18,7 @@ class KlSatReg:
         # mask = mask.unsqueeze(dim=1)
         # mask = mask.unsqueeze(dim=2) * mask.unsqueeze(dim=3)
         # FIXME: This should be true to begin with?
-        probs = probs / probs.sum(dim=-1)
+        probs = probs / probs.sum(dim=-1).unsqueeze(dim=-1)
         with torch.no_grad():
             max_prob, _ = probs.max(dim=-1)
             max_prob = max_prob.unsqueeze(dim=-1)
