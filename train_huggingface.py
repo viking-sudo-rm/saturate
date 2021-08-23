@@ -174,7 +174,7 @@ def main(args):
     device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
     if not args.no_pretrain:
-        model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
+        model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True, return_dict=True)
     else:
         model = GPT2LMHeadModel(GPT2Config(output_attentions=True, return_dict=True))
     tokenizer.pad_token = tokenizer.eos_token
