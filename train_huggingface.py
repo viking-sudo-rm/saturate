@@ -53,7 +53,6 @@ def parse_args():
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     parser.add_argument("--reg", type=float, default=1e-3)
     parser.add_argument("--no_pretrain", action="store_true")
-    parser.add_argument("--gpus", type=int, default=1)
     return parser.parse_args()
 
 
@@ -152,6 +151,7 @@ def train_model(
                 loss += reg_weight * torch.mean(
                     torch.stack([args.reg * reg(attn, batch_mask[:, :-1]) for attn in attns])
                 )
+            import pdb; pdb.set_trace()
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -174,7 +174,7 @@ def train_model(
 
 def main(args):
     assert args.model == "gpt2"
-    device = torch.device(f"cuda:0" if args.gpus > 0 and torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
     if not args.no_pretrain:
         model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
@@ -196,8 +196,8 @@ def main(args):
     n_train = len(train["input_ids"])
     max_iterations = n_train // args.batch_size * args.epochs
 
-    if torch.cuda.device_count() > 1 and args.gpus > 1:
-        model = nn.DataParallel(model, device_ids=list(range(args.gpus)))
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
     model = model.to(device)
     optimizer = AdamW(model.parameters(), lr=2e-5)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=-1)
