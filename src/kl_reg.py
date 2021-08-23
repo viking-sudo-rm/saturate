@@ -11,12 +11,11 @@ class KlSatReg:
     """
 
     def __init__(self, loss: Optional["torch._Loss"] = None, tol: float = .9):
-        self.loss = loss or KLDivLoss(reduction="mean")
+        self.loss = loss or KLDivLoss(reduction="batchmean")
         self.tol = tol
 
-    def __call__(self, probs: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
-        # assert not mask
-        # mask = mask.unsqueeze(dim=1)
+    def __call__(self, probs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        mask = mask.unsqueeze(dim=1)
         # mask = mask.unsqueeze(dim=2) * mask.unsqueeze(dim=3)
         with torch.no_grad():
             max_prob, _ = probs.max(dim=-1)
@@ -26,4 +25,6 @@ class KlSatReg:
             sat_probs = sat_mask.float() / counts
         # Add dimension for heads and for probabilities.
         breakpoint()
-        return self.loss(probs, sat_probs)
+        loss = self.loss(probs, sat_probs)
+        assert loss > 0
+        return loss
