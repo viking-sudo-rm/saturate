@@ -69,7 +69,7 @@ def get_dirs(args) -> Tuple[str, str]:
 
 
 @torch.no_grad()
-def get_metrics(args, model, dev, reg=None, device="cuda:0"):
+def get_metrics(args, model, dev, reg=None, device="cpu"):
     dev_tokens = dev["input_ids"]
     dev_mask = dev["attention_mask"]
     lm_losses, attn_losses = [], []
@@ -105,7 +105,7 @@ def train_model(
     scheduler,
     epochs=10,
     record_init=False,
-    device="cuda:0",
+    device="cpu",
     max_iterations=None,
 ):
     reg = KlSatReg()
@@ -173,7 +173,7 @@ def train_model(
 
 def main(args):
     assert args.model == "gpt2"
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
     if not args.no_pretrain:
         model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
