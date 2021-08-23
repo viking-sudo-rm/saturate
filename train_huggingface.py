@@ -49,11 +49,6 @@ def parse_args():
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
     parser.add_argument("--data", choices=["wikitext-2", "penn"], default="wikitext-2")
     parser.add_argument("--batch_metrics", type=int, default=None)
-    parser.add_argument(
-        "--sched",
-        choices=["constant_lr", "linear_lr", "sqrt_lr"],
-        default="constant_lr",
-    )
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     parser.add_argument("--reg", type=float, default=1e-3)
     return parser.parse_args()
@@ -210,7 +205,6 @@ def main(args):
         scheduler,
         epochs=args.epochs,
         record_init=True,
-        scheduler=args.sched,
         max_iterations=max_iterations,
         device=device,
     )
