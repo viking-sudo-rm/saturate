@@ -144,7 +144,7 @@ def train_model(
                 batch_tokens[:, 1:],
                 attention_mask=batch_mask[:, :-1],
             )
-            loss, _, attns = lm_outputs
+            loss, _, _, attns = lm_outputs
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
                 # Mean of means is fine here as long as internal number stays constant.
@@ -178,7 +178,7 @@ def main(args):
     if not args.no_pretrain:
         model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
     else:
-        model = GPT2LMHeadModel(GPT2Config(output_attentions=True))
+        model = GPT2LMHeadModel(GPT2Config(output_attentions=True, return_dict=True))
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(
         list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
