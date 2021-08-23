@@ -138,13 +138,13 @@ def train_model(
             optimizer.zero_grad()
             lm_outputs = model(batch_tokens, labels=batch_tokens, attention_mask=batch_mask)
             loss, _, _, attns = lm_outputs.values()
+            loss = loss.mean()  # FIXME: Why does the loss return two values here?
             reg_weight = reg_sched(iteration, max_iterations)
             if reg_weight != 0:
                 # Mean of means is fine here as long as internal number stays constant.
                 loss += reg_weight * torch.mean(
                     torch.stack([args.reg * reg(attn, batch_mask) for attn in attns])
                 )
-            breakpoint()
             loss.backward()
             optimizer.step()
             scheduler.step()
