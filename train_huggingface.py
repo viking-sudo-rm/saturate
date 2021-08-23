@@ -172,7 +172,8 @@ def main(args):
     assert args.model == "gpt2"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
-    model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
+    # model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True)
+    model = GPT2LMHeadModel(output_attentions=True)
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(
         list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
