@@ -86,6 +86,7 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
+    torch.cuda.empty_cache()
     return {
         # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "lm_loss": torch.stack(lm_losses).mean().item(),
@@ -149,10 +150,6 @@ def train_model(
             optimizer.step()
             scheduler.step()
             iteration += 1
-
-            del batch_tokens
-            del batch_mask
-            torch.cuda.empty_cache()
 
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
