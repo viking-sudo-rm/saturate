@@ -120,11 +120,12 @@ def train_model(
 
     best_loss = float("inf")
     iteration = 0
-    max_iterations = len(train) // args.batch_size * epochs
+    n_train = len(train["input_ids"])
+    max_iterations = n_train // args.batch_size * epochs
     for e in range(epochs):
         model.train()
         log.info(f"Starting epoch {e}...")
-        perm = torch.randperm(len(train))
+        perm = torch.randperm(n_train)
         train_tokens = train["input_ids"][perm, :]
         train_mask = train["attention_mask"][perm, :]
 
@@ -188,8 +189,8 @@ def main(args):
         truncation=True,
         return_tensors="pt",
     )
-    import pdb; pdb.set_trace()
-    max_iterations = len(train) // args.batch_size * args.epochs
+    n_train = len(train["input_ids"])
+    max_iterations = n_train // args.batch_size * args.epochs
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
@@ -226,7 +227,7 @@ def main(args):
         plt.title(f"dev {metric} over training")
         plt.xlabel("epoch")
         plt.ylabel(metric)
-        plt.savefig(f"{fig_dir}/{metric}.pdf")
+        plt.savefig(os.path.join(fig_dir, f"{metric}.pdf"))
 
 
 if __name__ == "__main__":
