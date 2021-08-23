@@ -44,7 +44,7 @@ def parse_args():
         "--model", type=str, default="gpt2", help="Name of huggingface model."
     )
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--dev_batch_size", type=int, default=50)
+    parser.add_argument("--dev_batch_size", type=int, default=16)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--fig_dir", type=str, default="figs/finetune-trans")
     parser.add_argument("--data_dir", type=str, default=f"{MODELS}/finetune-trans")
@@ -86,8 +86,6 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
-    from src.profiler import profile_cuda_tensors
-    profile_cuda_tensors(log)
     return {
         # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "lm_loss": torch.stack(lm_losses).mean().item(),
@@ -151,10 +149,6 @@ def train_model(
             optimizer.step()
             scheduler.step()
             iteration += 1
-
-            if iteration % 100 == 0:
-                from src.profiler import profile_cuda_tensors
-                profile_cuda_tensors(log)
 
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
