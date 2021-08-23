@@ -103,7 +103,6 @@ def train_model(
     epochs=10,
     record_init=False,
     device="cpu",
-    max_iterations=None,
 ):
     reg = KlSatReg()
     reg_sched = reg_schedules[args.reg_schedule]
@@ -149,6 +148,10 @@ def train_model(
             optimizer.step()
             scheduler.step()
             iteration += 1
+
+            for dev in [0, 1]:
+                mem = torch.cuda.memory_allocated(dev)
+                log.info(f"{dev} mem: {mem}")
 
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
