@@ -1,3 +1,4 @@
+from typing import List
 import torch
 import gc
 from logging import Logger
@@ -14,3 +15,8 @@ def profile_cuda_tensors(log: Logger) -> None:
         except:
             pass
     log.info(f"{n_total} total tensors found on GPU.")
+
+def profile_memory(log: Logger, devices: List[int] = [0]) -> None:
+    for dev in devices:
+        mem = torch.cuda.memory_allocated(dev)
+        log.info(f"{dev} mem: {mem}")

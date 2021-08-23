@@ -21,6 +21,7 @@ from src.metrics import get_norm
 from src.kl_reg import KlSatReg
 from src.reg_schedules import reg_schedules
 from src.utils import iterate_lines
+from src.profiler import profile_memory
 
 
 DATA = os.getenv("DATA")
@@ -86,6 +87,7 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
+    profile_memory(log, [0, 1])
     return {
         # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "lm_loss": torch.stack(lm_losses).mean().item(),
@@ -148,10 +150,7 @@ def train_model(
             optimizer.step()
             scheduler.step()
             iteration += 1
-
-            for dev in [0, 1]:
-                mem = torch.cuda.memory_allocated(dev)
-                log.info(f"{dev} mem: {mem}")
+            profile_memory(log, [0, 1])
 
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
