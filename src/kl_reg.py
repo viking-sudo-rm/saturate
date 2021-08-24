@@ -25,8 +25,8 @@ class KlSatReg:
             sat_mask = (probs > max_prob * self.tol)
             counts = sat_mask.sum(dim=-1).unsqueeze(dim=-1)
             sat_probs = sat_mask.float() / counts
-        probs = probs.flatten(end_dim=-1)
-        sat_probs = sat_probs.flatten(end_dim=-1)
+        probs = probs.flatten(end_dim=-2)
+        sat_probs = sat_probs.flatten(end_dim=-2)
         loss = self.loss(probs.log(), sat_probs)
         assert loss > 0
         return loss
