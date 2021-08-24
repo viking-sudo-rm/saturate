@@ -28,5 +28,5 @@ class KlSatReg:
         probs = probs.flatten(end_dim=-2)
         sat_probs = sat_probs.flatten(end_dim=-2)
         loss = self.loss(probs.log(), sat_probs)
-        assert loss > 0
+        # assert loss > 0
         return loss

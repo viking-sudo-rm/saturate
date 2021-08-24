@@ -12,6 +12,7 @@ from rich.logging import RichHandler
 from rich import print
 import pickle
 import os
+import random
 
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW, get_linear_schedule_with_warmup
 from transformers import GPT2Config
@@ -52,6 +53,7 @@ def parse_args():
     parser.add_argument("--reg_schedule", choices=reg_schedules.keys(), default=None)
     parser.add_argument("--reg", type=float, default=1.)
     parser.add_argument("--no_pretrain", action="store_true")
+    parser.add_argument("--seed", type=int, default=2)
     return parser.parse_args()
 
 
@@ -165,6 +167,9 @@ def train_model(
 
 
 def main(args):
+    torch.manual_seed(args.seed)
+    random.seed(args.seed)
+
     assert args.model == "gpt2"
     device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
