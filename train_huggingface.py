@@ -54,6 +54,7 @@ def parse_args():
     parser.add_argument("--reg", type=float, default=1.)
     parser.add_argument("--no_pretrain", action="store_true")
     parser.add_argument("--seed", type=int, default=2)
+    parser.add_argument("--device", type=int, default=0)
     return parser.parse_args()
 
 
@@ -171,13 +172,17 @@ def main(args):
     random.seed(args.seed)
 
     assert args.model == "gpt2"
-    device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
     tokenizer = GPT2Tokenizer.from_pretrained(args.model)
     if not args.no_pretrain:
         model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True, return_dict=True)
     else:
         model = GPT2LMHeadModel(GPT2Config(output_attentions=True, return_dict=True, n_layer=6, n_head=6))
+    model = model.to(device)
+    optimizer = AdamW(model.parameters(), lr=2e-5)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=-1)
     tokenizer.pad_token = tokenizer.eos_token
+
     train = tokenizer(
         list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
         padding=True,
@@ -190,12 +195,6 @@ def main(args):
         truncation=True,
         return_tensors="pt",
     )
-
-    if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model)
-    model = model.to(device)
-    optimizer = AdamW(model.parameters(), lr=2e-5)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=-1)
 
     # Train the model and collect metrics.
     log.info("Starting training...")
