@@ -6,7 +6,6 @@ import torch
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import torch.nn as nn
-from torch import optim
 import argparse
 import logging
 from rich.logging import RichHandler
@@ -87,6 +86,7 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
+    log.info("Getting metrics...")
     profile_memory(log, [0, 1])
     return {
         # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
@@ -129,6 +129,9 @@ def train_model(
         train_mask = train["attention_mask"][perm, :]
 
         for b in tqdm.trange(0, len(train_tokens) - args.batch_size, args.batch_size):
+            log.info(f"Starting batch {b}...")
+            profile_memory(log, [0, 1])
+
             if args.batch_metrics is not None and iteration % args.batch_metrics == 0:
                 norm = get_norm(model).item()
                 batch_timeseries["step"].append(iteration)
@@ -150,7 +153,6 @@ def train_model(
             optimizer.step()
             scheduler.step()
             iteration += 1
-            profile_memory(log, [0, 1])
 
         model.eval()
         metrics = get_metrics(args, model, dev, reg=reg, device=device)
