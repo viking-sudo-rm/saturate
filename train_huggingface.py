@@ -137,11 +137,12 @@ def train_model(
                 batch_timeseries["step"].append(iteration)
                 batch_timeseries["norm"].append(norm)
 
+            batch_tokens = train_tokens[b : b + args.batch_size].to(device)
+            batch_mask = train_mask[b : b + args.batch_size].to(device)
+
             log.info(f"Starting batch {b}...")
             profile_memory(log, [0, 1])
 
-            batch_tokens = train_tokens[b : b + args.batch_size].to(device)
-            batch_mask = train_mask[b : b + args.batch_size].to(device)
             optimizer.zero_grad()
             lm_outputs = model(batch_tokens, labels=batch_tokens, attention_mask=batch_mask)
             loss, _, _, attns = lm_outputs.values()
