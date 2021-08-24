@@ -180,7 +180,7 @@ def main(args):
     if not args.no_pretrain:
         model = GPT2LMHeadModel.from_pretrained(args.model, output_attentions=True, return_dict=True)
     else:
-        model = GPT2LMHeadModel(GPT2Config(output_attentions=True, return_dict=True))
+        model = GPT2LMHeadModel(GPT2Config(output_attentions=True, return_dict=True, n_layer=6, n_head=6))
     tokenizer.pad_token = tokenizer.eos_token
     train = tokenizer(
         list(iterate_lines(f"{DATA}/{args.data}/train.txt")),
