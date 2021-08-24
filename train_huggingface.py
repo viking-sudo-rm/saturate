@@ -20,7 +20,6 @@ from src.metrics import get_norm
 from src.kl_reg import KlSatReg
 from src.reg_schedules import reg_schedules
 from src.utils import iterate_lines
-from src.profiler import profile_memory
 
 
 DATA = os.getenv("DATA")
@@ -86,8 +85,6 @@ def get_metrics(args, model, dev, reg=None, device="cpu"):
         )
         lm_losses.append(lm_loss.cpu())
         attn_losses.append(attn_loss.cpu())
-    log.info("Getting metrics...")
-    profile_memory(log, [0, 1])
     return {
         # "norm": get_norm(model.encoder).item(),  # Ignore embedding parameters.
         "lm_loss": torch.stack(lm_losses).mean().item(),
@@ -129,9 +126,6 @@ def train_model(
         train_mask = train["attention_mask"][perm, :]
 
         for b in tqdm.trange(0, len(train_tokens) - args.batch_size, args.batch_size):
-            log.info(f"Starting batch {b}...")
-            profile_memory(log, [0, 1])
-
             if args.batch_metrics is not None and iteration % args.batch_metrics == 0:
                 norm = get_norm(model).item()
                 batch_timeseries["step"].append(iteration)
@@ -139,9 +133,6 @@ def train_model(
 
             batch_tokens = train_tokens[b : b + args.batch_size].to(device)
             batch_mask = train_mask[b : b + args.batch_size].to(device)
-
-            log.info(f"Starting batch {b}...")
-            profile_memory(log, [0, 1])
 
             optimizer.zero_grad()
             lm_outputs = model(batch_tokens, labels=batch_tokens, attention_mask=batch_mask)
